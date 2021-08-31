@@ -1,0 +1,30 @@
+<template>
+  <div class="container">
+    <div class="row">
+      <div class="col-sm-6">
+        <div class="form-group">
+          <div class="input-group date" id="datetimepicker3" data-target-input="nearest">
+
+            <input type="text" class="form-control datetimepicker-input" data-target="#datetimepicker3" />
+
+            <div class="input-group-append" data-target="#datetimepicker3" data-toggle="datetimepicker">
+              <div class="input-group-text"><i class="fa fa-clock-o"></i></div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+    name: 'StartHour'
+
+}
+</script>
+
+<style>
+
+</style>
