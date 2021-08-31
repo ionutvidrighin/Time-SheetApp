@@ -1,24 +1,3 @@
-# time-sheet
+Time Sheet Tracker App built with VueJS and Firebase
 
-## Project setup
-```
-npm install
-```
-
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
-
-### Compiles and minifies for production
-```
-npm run build
-```
-
-### Lints and fixes files
-```
-npm run lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+![image](https://user-images.githubusercontent.com/63950523/131540583-a4327f8a-8b44-4f32-a05a-5420cacb1497.png)
