@@ -1,6 +1,6 @@
 Time Sheet Tracker App built with VueJS and Firebase
 
-![image](https://user-images.githubusercontent.com/63950523/131540583-a4327f8a-8b44-4f32-a05a-5420cacb1497.png)
+![image](https://user-images.githubusercontent.com/63950523/132032103-d45f2fdd-31fe-4f0d-9e9a-ce7e24ff51d4.png)
 
-![image](https://user-images.githubusercontent.com/63950523/131540911-cf73d7cc-97a9-4a92-9593-c8ca71ae0eac.png)
+![image](https://user-images.githubusercontent.com/63950523/132032208-9c941d63-ae54-4319-947d-18ad9966725f.png)
 
