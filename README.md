@@ -1,4 +1,4 @@
-Time Sheet Tracker App built with VueJS and Firebase
+Timesheet Tracker App built with VueJS and Firebase
 
 ![image](https://user-images.githubusercontent.com/63950523/132032103-d45f2fdd-31fe-4f0d-9e9a-ce7e24ff51d4.png)
 
