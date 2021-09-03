@@ -1,6 +1,8 @@
 <template>
   <div class="d-flex flex-column">
+
     <Header />
+
     <v-sheet>
       <v-sheet height="6vh" color="transparent">
         <v-toolbar flat>
@@ -54,7 +56,7 @@
             min-width="350px"
             flat >
             <v-toolbar :color="selectedEvent.color" dark >
-              <v-btn icon @click.prevent="toggleDeleteNote = true">
+              <v-btn icon @click.prevent="toggleDeleteNote = true" v-if="selectedEvent.id == userUID">
                 <v-icon>mdi-delete-forever</v-icon>
               </v-btn>
               <v-toolbar-title class="px-5">
@@ -65,7 +67,7 @@
             <v-sheet class="pa-2" width="250" height="fit-content" color="#f5f5f5">
                 {{selectedEvent.name}}
             </v-sheet>
-            <v-divider></v-divider>
+            <v-divider style="background-color: #e6e6e6"></v-divider>
 
             <v-sheet class="pa-1" color="#e6e6e6" elevation="2">
               <v-btn
@@ -85,7 +87,7 @@
               color="#f5f5f5">
                 <p class="ma-0 font-weight-regular body-2">Confirm ștergerea?</p>
                 <v-sheet width="100%" color="transparent" class="d-flex justify-space-around mt-1 align-center">
-                  <v-btn class="caption pa-1">DA</v-btn>
+                  <v-btn class="caption pa-1" @click.prevent="deleteEvent">DA</v-btn>
                   <v-btn class="caption pa-1" @click.prevent="toggleDeleteNote = false">NU</v-btn>
                 </v-sheet>
             </v-sheet>
@@ -99,7 +101,8 @@
 
 <script>
 import { mapGetters, mapState } from 'vuex'
-import { auth } from '../firebase'
+import { auth, dataBase } from '../firebase/index'
+import { collection, query, onSnapshot, doc, deleteDoc } from "firebase/firestore";
 import Header from '../components/Header.vue'
 
 export default {
@@ -125,6 +128,20 @@ export default {
       avatar: auth.currentUser.photoURL
     }
     this.$store.dispatch('logUserIn', user)
+
+    const data = () => { 
+
+      const changeTrigger = query(collection(dataBase, "events"))
+
+      onSnapshot(changeTrigger, (querySnapshot) => {
+        const event = []
+        querySnapshot.forEach((doc) => {
+          event.push(doc.data())
+          this.events = event
+        })
+      })
+    }
+    data()
   },
   mounted () {
     this.$refs.calendar.checkChange();
@@ -177,8 +194,11 @@ export default {
 
       nativeEvent.stopPropagation()
     },
-    addNewEntry(){
-
+    async deleteEvent(){
+      console.log('event deleted')
+      await deleteDoc(doc(dataBase, "events", this.selectedEvent.docID));
+      this.selectedOpen = false
+      this.toggleDeleteNote = false
     },
     updateRange () {
       const data = this.getAllEvents
@@ -188,7 +208,7 @@ export default {
   computed: {
     ...mapGetters(['getAllEvents']),
     ...mapState({
-      getUserName: (state) => state.user.email
+      userUID: (state) => state.user.uid
     })
   }
 }

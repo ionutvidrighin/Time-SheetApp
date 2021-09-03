@@ -66,8 +66,8 @@
 
           <v-sheet width="100%" class="d-flex">
             <v-sheet class="d-flex justify-center align-center" width="90%">
-              <v-btn color="light-blue lighten-3" type="submit" :disabled="loading">
-                <p class="mb-0">confirmă pontaj</p>
+              <v-btn color="#00ACC1" type="submit" :disabled="loading">
+                <p class="mb-0 white--text">confirmă pontaj</p>
                 <v-progress-circular v-if="loading" indeterminate color="#02c782" size="25" class="ml-1">
                 </v-progress-circular>
               </v-btn>
@@ -84,6 +84,9 @@
 </template>
 
 <script>
+import { mapState } from 'vuex'
+import {  dataBase } from '../firebase'
+import { doc, setDoc, collection, getDocs } from "firebase/firestore"; 
 
 export default {
   name: 'LaterDateDialog',
@@ -108,13 +111,39 @@ export default {
         if (!val) return 'Nicio culoare aleasă'
         return true
       }
-    ]
+    ],
+    allDataFromDB: []
   }),
   methods: {
+    capitalizeName(string) {
+      return string && string[0].toUpperCase() + string.slice(1)
+    },
+    extractName(string) {
+      let charsToRemove = ['.', '@']
+
+      for (let char of charsToRemove){
+        string = string.split(char).join('-');
+      }
+      return string.split('-')[0]
+    },
     closeBox(){
       this.$store.commit('updateAddForLater')
     },
-    submitEntry() {
+    searchDate(startDate, list){
+      for (let i = 0; i < list.length; i++) {
+        if (list[i].start === startDate) {
+          return list[i];
+        }
+      }
+    },
+    searchName(userName, list){
+      for (let i = 0; i < list.length; i++) {
+        if (list[i].user === userName) {
+          return list[i];
+        }
+      }
+    },
+    async submitEntry() {
 
       const formIsValid = this.$refs.form.validate();
       if (formIsValid) {
@@ -142,13 +171,10 @@ export default {
 
         if (endDate < startDate) {
           console.log('error')
-          this.hoursRule = ['Oră sfârșit este în trecut']
+          this.hoursRule = ['Oră sfârșit este în trecut', ...this.hoursRule]
           setTimeout( () => {
-            this.startHour = null
-            this.endHour = null 
-            this.$refs.form.reset()
-            this.hoursRule = [true]
-          }, 1300)
+            this.hoursRule.shift()
+          }, 500)
         } else {
           let timeDifference = endDate.getTime() - startDate.getTime()
           let milliseconds = timeDifference
@@ -156,27 +182,65 @@ export default {
           milliseconds -= hoursDifference * 1000 * 60 * 60
           minutesDifference = Math.floor(milliseconds / 1000 / 60)
 
-          this.loading = true
+          const itemsFromDB = await getDocs(collection(dataBase, "events"))
+          itemsFromDB.forEach((doc) => {
+            this.allDataFromDB.push(doc.data())
+          })
 
-          setTimeout(() => {
-            this.loading = false
-            this.$store.commit('updateAddForLater')
-            const event = {
+          const currentlyLoggedUser = this.capitalizeName(this.extractName(this.userName))
+
+          let allUsersInDB = this.allDataFromDB.map(userName => userName.user);
+          let allDatesInDB = this.allDataFromDB.map(date => date.start)
+
+          const checkUser = allUsersInDB.includes(currentlyLoggedUser)
+          const checkDate = allDatesInDB.includes(this.date)
+
+          if (checkUser && checkDate) {
+            console.log('user has entry in DB already')
+            this.dateRule = ['Există deja un pontaj pentru această dată', ...this.dateRule]
+            setTimeout( () => {
+              this.dateRule.shift()
+            }, 500)
+          } else {
+            this.loading = true
+            let randomID = `AprtloYe${Math.floor(Math.random() * 89658008415).toString()}lKew`
+
+            await setDoc(doc(dataBase, "events", randomID), {
+              docID: randomID,
+              id: this.userID,
               start: this.date,
-              name: `(${this.startHour} - ${this.endHour}) - ${hoursDifference} ore și ${minutesDifference} minute`,
+              name: `${this.capitalizeName(this.extractName(this.userName))} * (${this.startHour} - ${this.endHour}) - ${hoursDifference} ore și ${minutesDifference} minute`,
               end: this.date,
-              color: this.color.hex
-            }
-            this.$store.dispatch('storeEvent', event)
-            this.date = null
-            this.startHour = null
-            this.endHour = null
-          }, 2000)
+              color: this.color.hex,
+              user: this.capitalizeName(this.extractName(this.userName)),
+              hours: hoursDifference,
+              minutes: minutesDifference,
+              interval: `${this.startHour} - ${this.endHour}`
+            })
+            this.$store.dispatch('storeEvent', {
+              user: this.capitalizeName(this.extractName(this.userName)),
+              hours: hoursDifference,
+              minutes: minutesDifference,
+            })
+
+            setTimeout( () => { 
+              this.loading = false 
+              this.$store.commit('updateAddForLater')
+              this.date = null
+              this.startHour = null
+              this.endHour = null
+              this.color = null
+            }, 800)
+          }
         }
       }
     }
   },
   computed: {
+    ...mapState({
+      userID: state => state.user.uid,
+      userName : state => state.user.email,
+    }),
     toggleDialog: {
       get(){
         return this.$store.state.addForLater
@@ -205,7 +269,7 @@ export default {
     cursor: pointer;
     width: 25px;
     height: 25px;
-    background-color: #81D4FA;
+    background-color: #4DD0E1;
     border-radius: 50%;
     margin: .5rem 0;
   }

@@ -1,12 +1,13 @@
-import { createUserWithEmailAndPassword } from 'firebase/auth'
+import { auth } from './index'
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth'
 
-const createNewAccount = async (auth, email, password) => {
-  try {
-    const response = await createUserWithEmailAndPassword(auth, email, password)
-    console.log(response)
-  } catch(error) {
-    console.log(error)
-  }
+
+async function makeRequest(method, auth, email, pass) {
+  const response = await method(auth, email, pass)
+  return response
 }
 
-export { createNewAccount }
+export default {
+  createNewAccount: (email, pass) => makeRequest(createUserWithEmailAndPassword, auth, email, pass),
+  loginUser: (email, pass) => makeRequest(signInWithEmailAndPassword, auth, email, pass)
+}

@@ -7,23 +7,19 @@
 </template>
 
 <script>
-// import Login from './components/Login';
+import { dataBase } from './firebase'
+import { collection, getDocs } from "firebase/firestore";
 
 export default {
   name: 'App',
-  components: {
-    // Login
-  },
-  data () {
-    return {
-      calendar: false,
-      login: false
+  created(){
+    const getDataFromDB = async () => { 
+      const querySnapshot = await getDocs(collection(dataBase, "events"));
+      querySnapshot.forEach( (doc) => {
+        this.$store.dispatch('storeEvent', doc.data())
+      })
     }
-  },
-  methods: {
-    toggle() {
-      return this.calendar = !this.calendar
-    }
+    getDataFromDB()
   }
 }
 </script>

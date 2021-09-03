@@ -2,6 +2,7 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Login from '../views/Login.vue'
 import Registration from '../views/Registration.vue'
+import PasswordReset from '../views/PasswordReset.vue'
 import Home from '../views/Home.vue'
 import { auth } from '../firebase'
  
@@ -25,6 +26,11 @@ const routes = [
       path: '/register',
       name: 'register',
       component: Registration,
+    },
+    {
+      path: '/reset',
+      name: 'reset',
+      component: PasswordReset,
     }
   ]
   

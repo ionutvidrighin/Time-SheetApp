@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app'
-import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth'
+import { getAuth } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
 
 const firebaseConfig = {
@@ -17,13 +17,4 @@ const firebaseApp = initializeApp(firebaseConfig)
 const auth = getAuth(firebaseApp)
 const dataBase = getFirestore(firebaseApp)
 
-const createNewAccount = async (auth, email, password) => {
-  try {
-    const response = await createUserWithEmailAndPassword(auth, email, password)
-    console.log(response)
-  } catch(error) {
-    console.log(error)
-  }
-}
-
-export { auth, dataBase, createNewAccount }
+export { auth, dataBase }

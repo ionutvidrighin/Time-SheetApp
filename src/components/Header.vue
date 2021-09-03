@@ -1,7 +1,7 @@
 <template>
-  <v-sheet class="d-flex justify-center align-center" color="#00e3fc" width="100%" height="10vh">
+  <v-sheet class="d-flex justify-center align-center" color="#00ACC1" width="100%" height="10vh">
     <v-sheet class="d-flex align-center justify-space-between" height="85%" width="99.5%" color="rgba(255, 255, 255, 0.3)" elevation="3" rounded>
-      <v-sheet class="d-flex bla bla" height="100%" width="fit-content" color="transparent">
+      <v-sheet class="d-flex" height="100%" width="fit-content" color="transparent">
         <v-sheet class="d-flex justify-center align-center" height="100%" width="100px" color="transparent">
           <v-avatar>
             <img
@@ -9,20 +9,20 @@
               alt="John" >
           </v-avatar>
         </v-sheet>
-        <v-sheet class="d-flex justify-space-between" height="100%" width="250px" color="transparent">
+        <v-sheet class="d-flex justify-space-between" height="100%" width="200px" color="transparent">
           <div class="d-flex flex-column justify-center align-start" style="height: 100%">
             <p class="ma-0">Bun venit,</p>
             <p class="ma-0 align-self-center font-weight-bold">
-              {{ capitalizeName(manipulateName(getUserData.email))  }}
+              {{ capitalizeName(extractName(getUserData.email))  }}
             </p>
           </div>
 
-          <div class="d-flex justify-center align-center" style="height: 100%">
+          <div class="d-flex justify-center align-center 23daada" style="height: 100%">
             <v-row justify="center">
               <v-dialog v-model="toggleDialog" persistent max-width="350">
 
                 <template v-slot:activator="{ on, attrs }">
-                  <v-btn v-bind="attrs" v-on="on" >
+                  <v-btn v-bind="attrs" v-on="on" class="px-2">
                     <p class="text-capitalize mb-0"> Adaugă pontaj </p>
                   </v-btn>
                 </template>
@@ -30,7 +30,7 @@
                 <v-sheet width="350" height="340" style="overflow-x: hidden">
                   <v-sheet width="100%" height="70px" class="text-h5 d-flex flex-column align-center justify-center" style="position: relative">
                     <p class="mb-1 subtitle-1"> Adaugă pontaj nou pentru azi, </p> 
-                    <p class="mb-0 subtitle-1 font-weight-medium light-blue--text text--lighten-1">
+                    <p class="mb-0 subtitle-1 font-weight-medium cyan--text text--darken-1">
                       {{ new Date().toLocaleDateString('ro-RO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) }}
                     </p>
                     <div class="close-btn">
@@ -81,8 +81,8 @@
                       <v-divider></v-divider>
 
                       <v-sheet class="d-flex justify-center align-center mt-2">
-                        <v-btn color="light-blue lighten-3" type="submit" :disabled="loading">
-                          <p class="mb-0">confirmă pontaj</p>
+                        <v-btn color="#00ACC1" type="submit" :disabled="loading">
+                          <p class="mb-0 white--text">confirmă pontaj</p>
                           <v-progress-circular v-if="loading" indeterminate color="#02c782" size="25" class="ml-1">
                           </v-progress-circular>
                         </v-btn>
@@ -91,8 +91,8 @@
 
                   <v-sheet class="d-flex flex-column justify-center align-center" height="fit-content" width="100%">
                     <p class="mb-0">sau</p>
-                    <v-btn color="light-blue lighten-3" @click="addForLaterDate" :disabled="loading">
-                      <p class="mb-0">Adaugă pentru o altă dată</p>
+                    <v-btn color="#00ACC1" @click="addForLaterDate" :disabled="loading">
+                      <p class="mb-0 white--text">Adaugă pentru o altă dată</p>
                     </v-btn>
                   </v-sheet>
 
@@ -101,6 +101,7 @@
             </v-row>
           </div>
         </v-sheet>
+        <ExcelExport />
       </v-sheet>
       
       <v-sheet class="d-flex justify-center align-center" height="100%" width="200px" color="transparent">
@@ -132,13 +133,16 @@
 
 <script>
 import { mapGetters, mapState } from 'vuex'
-import { auth } from '../firebase'
+import { auth, dataBase } from '../firebase'
+import { doc, setDoc, collection, getDocs } from "firebase/firestore"; 
+import ExcelExport from './ExcelExport.vue'
 import LaterDateDialog from './LaterDateDialog'
 
 export default {
   name: 'Header',
   components: {
-    LaterDateDialog
+    LaterDateDialog,
+    ExcelExport
   },
   data: () => ({
     logoutPopUp: false,
@@ -154,20 +158,21 @@ export default {
     ],
     colorRule: [
       (val) => {
-        if (!val) return 'Nicio culoare aleasă'
+        if (!val) return 'Nicio culoare selectată'
         return true
       }
-    ]
+    ],
+    allDataFromDB: []
   }),
   methods: {
     capitalizeName(string) {
       return string && string[0].toUpperCase() + string.slice(1)
     },
-    manipulateName(string) {
+    extractName(string) {
       let charsToRemove = ['.', '@']
 
       for (let char of charsToRemove){
-          string = string.split(char).join('-');
+        string = string.split(char).join('-');
       }
       return string.split('-')[0]
     },
@@ -178,7 +183,7 @@ export default {
       this.$store.commit('updateAddForLater')
       this.$store.commit('updateAddForNow')
     },
-    submitCurrentEntry(){
+    async submitCurrentEntry(){
       const formIsValid = this.$refs.form.validate();
       if (formIsValid) {
         let startTimeHH = this.startHour.substr(0, 2)
@@ -204,53 +209,82 @@ export default {
         let minutesDifference;
 
         if (endDate < startDate) {
-          console.log('error')
-          this.hoursRule = ['Oră sfârșit este în trecut']
+          console.log('error! end date is in the past')
+          this.hoursRule = ['Oră sfârșit este în trecut', ... this.hoursRule]
           setTimeout( () => {
-            this.startHour = null
-            this.endHour = null 
-            this.$refs.form.reset()
-            this.hoursRule = [true]
-          }, 1300)
+            this.hoursRule.shift()
+          }, 500)
         } else {
-          console.log('it works!')
           let timeDifference = endDate.getTime() - startDate.getTime()
           let milliseconds = timeDifference
           hoursDifference = Math.floor(milliseconds / 1000 / 60 / 60)
           milliseconds -= hoursDifference * 1000 * 60 * 60
           minutesDifference = Math.floor(milliseconds / 1000 / 60)
 
-          this.loading = true
+          const itemsFromDB = await getDocs(collection(dataBase, "events"))
+          itemsFromDB.forEach((doc) => {
+            this.allDataFromDB.push(doc.data())
+          })
 
-          setTimeout(() => {
-            this.loading = false
-            this.$store.commit('updateAddForNow')
-            const event = {
+          const currentlyLoggedUser = this.capitalizeName(this.extractName(this.userName))
+
+          let allUsersInDB = this.allDataFromDB.map(userName => userName.user);
+          let allDatesInDB = this.allDataFromDB.map(date => date.start)
+
+          const checkUser = allUsersInDB.includes(currentlyLoggedUser)
+          const checkDate = allDatesInDB.includes(today.toISOString().substr(0, 10))
+
+          if (checkUser && checkDate) {
+            console.log('user has entry in DB already')
+            this.hoursRule = ['Pontajul de azi există deja', ...this.hoursRule]
+            setTimeout( () => {
+              this.hoursRule.shift()
+            }, 500)
+          } else {
+            this.loading = true
+            let randomID = `AprtloYe${Math.floor(Math.random() * 89658008415).toString()}`
+
+            await setDoc(doc(dataBase, "events", randomID), {
+              docID: randomID,
+              id: this.userID,
               start: new Date().toISOString().substr(0, 10),
-              name: `${this.capitalizeName(this.manipulateName(this.userName))} * (${this.startHour} - ${this.endHour}) - ${hoursDifference} ore și ${minutesDifference} minute`,
+              name: `${this.capitalizeName(this.extractName(this.userName))} * (${this.startHour} - ${this.endHour}) - ${hoursDifference} ore si ${minutesDifference} minute`,
               end: new Date().toISOString().substr(0, 10),
               color: this.color.hex,
-              user: this.capitalizeName(this.manipulateName(this.userName))
-            }
-          this.$store.dispatch('storeEvent', event)
-          }, 2000)
+              user: this.capitalizeName(this.extractName(this.userName)),
+              hours: hoursDifference,
+              minutes: minutesDifference
+            })
+
+            this.$store.dispatch('storeEvent', {
+              user: this.capitalizeName(this.extractName(this.userName)),
+              hours: hoursDifference,
+              minutes: minutesDifference,
+            })
+
+            setTimeout(() => {
+              this.loading = false
+              this.startHour = null
+              this.endHour = null 
+              this.color = null
+              this.$store.commit('updateAddForNow')
+            }, 800)
+          }
         }
       }
     },
     logOut() {
       auth.signOut()
-      console.log(auth)
-      const user = {}
-      this.$store.dispatch('logUserOut', user)
+      this.$store.dispatch('logUserOut', {})
       this.$router.push({path: '/'})
     }
   },
   computed: {
-    ...mapGetters(['getUserData']),
+    ...mapGetters(['getUserData', 'getAllEvents']),
     ...mapState({
       avatar: state => state.user.avatar,
-      userName : state => state.user.email,
-      workedHours: state => state.user.workedHours
+      userID: state => state.user.uid,
+      userName : state => state.user.email
     }),
     setAvatar(){
       if (this.avatar) return this.avatar
@@ -263,7 +297,20 @@ export default {
       set(){
         this.$store.commit('updateAddForNow')
       }
-    }
+    },
+    // workedHours(){
+    //   const currentlyLoggedUser = this.capitalizeName(this.manipulateName(this.userName))
+    //   const userHours = this.getAllEvents.reduce((acc, item) => {
+    //     if (item.user === currentlyLoggedUser) 
+    //       return { 
+    //         name: item.user, 
+    //         hours: acc.hours + item.hours, 
+    //         minutes: acc.hours + item.minutes 
+    //         }
+    //     return {...acc}
+    //     }, {hours: 0, minutes: 0})
+    //   return userHours
+    // }
   }
 }
 </script>

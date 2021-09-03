@@ -14,12 +14,7 @@ const store = new Vuex.Store({
     },
     addForNow: false,
     addForLater: false,
-    events: [{
-      start: '2021-08-11',
-      name: 'Ionut * sflsdlasjdwedasdáwdla sflsdlasjdwedasdáwdla sflsdlasjdwedasdáwdla',
-      end: '2021-08-11',
-      color: 'green'
-    }]
+    events: []
   },
   mutations: {
     toggleLogin: (state) => {
@@ -39,6 +34,9 @@ const store = new Vuex.Store({
     },
     addNewEvent: (state, payload) => {
       state.events.push(payload)
+    },
+    clearAllEvents: (state) => {
+      state.events = []
     }
   },
   actions: {
@@ -69,7 +67,6 @@ const store = new Vuex.Store({
       return state.events
     }
   }
-
 })
 
 export default store
