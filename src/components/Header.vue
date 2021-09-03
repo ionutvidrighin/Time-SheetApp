@@ -253,7 +253,8 @@ export default {
               color: this.color.hex,
               user: this.capitalizeName(this.extractName(this.userName)),
               hours: hoursDifference,
-              minutes: minutesDifference
+              minutes: minutesDifference,
+              interval: `${this.startHour} - ${this.endHour}`
             })
 
             this.$store.dispatch('storeEvent', {
